@@ -1,0 +1,15 @@
+{
+  "name": "vue-project-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "vue": "^3.4.0",
+    "vue-tsc": "^3.0.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit"
+  }
+}

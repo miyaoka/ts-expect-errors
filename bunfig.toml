@@ -1,0 +1,5 @@
+[test]
+# src2フォルダをテスト対象から除外
+# testフォルダ内のテストファイルのみを対象とする
+root = "./test"
+preload = ["./test/setup.ts"]

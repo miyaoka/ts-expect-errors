@@ -1,0 +1,25 @@
+{
+  "name": "ts-expect-errors",
+  "version": "0.1.0",
+  "module": "index.ts",
+  "type": "module",
+  "bin": {
+    "ts-expect-errors": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@vue/compiler-dom": "^3.5.20",
+    "@vue/compiler-sfc": "^3.5.20",
+    "globby": "^14.1.0",
+    "gunshi": "^0.26.3"
+  }
+}
