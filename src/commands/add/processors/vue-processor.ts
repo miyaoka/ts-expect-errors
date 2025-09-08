@@ -236,7 +236,7 @@ function processTemplateErrors(
         }
 
         // コメントを挿入
-        const comment = `<!-- @vue-expect-error -->`;
+        const comment = `<!-- @vue-expect-error TS${error.code} -->`;
 
         // 同一行にコメントを挿入
         if (lineContent) {
