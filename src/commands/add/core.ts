@@ -1,5 +1,6 @@
 import { $ } from "bun";
 import { resolve } from "node:path";
+import { readFile, exists } from "node:fs/promises";
 import { processTsExpectErrors } from "./processors/ts-processor";
 import { processTsxExpectErrors } from "./processors/tsx-processor";
 import { processVueExpectErrors } from "./processors/vue-processor";
@@ -44,27 +45,45 @@ function parseTscOutput(output: string): TsError[] {
   return errors;
 }
 
-
-// メインの処理関数
-export async function processTypeScriptErrors(options: {
-  project: string;
-  checker: string;
-}): Promise<void> {
-  const { project, checker } = options;
-  const projectPath = resolve(project);
+// ログファイルからtsc出力を読み込む
+async function readTscOutputFromFile(logFilePath: string): Promise<string | null> {
+  const resolvedPath = resolve(logFilePath);
   
+  // ログファイルの存在確認
+  if (!await exists(resolvedPath)) {
+    console.error(`Log file not found: ${resolvedPath}`);
+    process.exit(1);
+  }
+  
+  console.log(`Reading log file: ${resolvedPath}...`);
+  const content = await readFile(resolvedPath, 'utf-8');
+  
+  // ログファイルが空の場合
+  if (!content.trim()) {
+    console.log('Log file is empty. No TypeScript errors to process.');
+    return null;
+  }
+  
+  return content;
+}
+
+// tscまたはvue-tscを実行してエラーを取得
+async function runTypeScriptChecker(projectPath: string, checker: string): Promise<string | null> {
   console.log(`Running ${checker} in ${projectPath}...`);
   
-  // tscを実行してエラーを取得
   const result = await $`npx ${checker} --noEmit`.cwd(projectPath).nothrow().quiet();
   
   if (result.exitCode === 0) {
     console.log('No TypeScript errors found.');
-    return;
+    return null;
   }
   
-  // エラー出力をパース
-  const errors = parseTscOutput(result.stdout.toString());
+  return result.stdout.toString();
+}
+
+
+// エラーを処理してファイルにコメントを挿入
+async function processErrors(errors: TsError[], projectPath: string): Promise<void> {
   
   console.log(`Found ${errors.length} errors`);
   
@@ -99,4 +118,34 @@ export async function processTypeScriptErrors(options: {
   }
   
   console.log('Done!');
+}
+
+// メインの処理関数
+export async function processTypeScriptErrors(options: {
+  project: string;
+  checker: string;
+  "log-file"?: string;
+}): Promise<void> {
+  const { project, checker } = options;
+  const projectPath = resolve(project);
+  const logFile = options["log-file"];
+  
+  // ログファイルが指定されている場合は読み込み
+  if (logFile) {
+    const tscOutput = await readTscOutputFromFile(logFile);
+    if (!tscOutput) return; // 空またはエラーの場合は終了
+    
+    // エラー出力をパース
+    const errors = parseTscOutput(tscOutput);
+    await processErrors(errors, projectPath);
+    return;
+  }
+  
+  // ログファイルが指定されていない場合はtscを実行
+  const tscOutput = await runTypeScriptChecker(projectPath, checker);
+  if (!tscOutput) return; // エラーがない場合は終了
+  
+  // エラー出力をパース
+  const errors = parseTscOutput(tscOutput);
+  await processErrors(errors, projectPath);
 }
