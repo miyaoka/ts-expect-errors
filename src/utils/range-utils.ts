@@ -1,3 +1,5 @@
+import type { SFCDescriptor } from '@vue/compiler-sfc';
+
 /**
  * 範囲情報の型定義
  */
@@ -16,4 +18,30 @@ export function isInRanges(
   return ranges.some(
     (range) => line >= range.start && line <= range.end
   );
+}
+
+/**
+ * SFCDescriptorから各セクションの範囲を取得
+ */
+export function getVueSectionRanges(descriptor: SFCDescriptor): {
+  templateRanges: Range[];
+  scriptRanges: Range[];
+} {
+  const scriptRanges: Range[] = [
+    descriptor.scriptSetup?.loc,
+    descriptor.script?.loc,
+  ]
+    .filter((loc) => loc != null)
+    .map((loc) => ({ start: loc.start.line, end: loc.end.line }));
+  
+  const templateRanges: Range[] = descriptor.template?.loc
+    ? [
+        {
+          start: descriptor.template.loc.start.line,
+          end: descriptor.template.loc.end.line,
+        },
+      ]
+    : [];
+  
+  return { templateRanges, scriptRanges };
 }

@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { parse } from '@vue/compiler-sfc';
+import { isInRanges, getVueSectionRanges } from '../../../utils/range-utils';
 
 /**
  * Vueファイルから@vue-expect-errorと@ts-expect-errorコメントを削除
@@ -8,58 +9,52 @@ export function removeVueExpectErrors(filePath: string): void {
   const content = readFileSync(filePath, 'utf-8');
   const { descriptor } = parse(content, { filename: filePath });
   
-  let modifiedContent = content;
+  // ファイル全体を行配列として扱う（addと同じ方式）
+  const lines = content.split('\n');
   let removeCount = 0;
   
-  // template内の@vue-expect-errorコメントを削除
-  if (descriptor.template) {
-    const templateContent = descriptor.template.content;
-    const lines = templateContent.split('\n');
-    const processedLines: string[] = [];
+  // 各セクションの範囲を事前に定義（addと同じ）
+  const { templateRanges, scriptRanges } = getVueSectionRanges(descriptor);
+  
+  // 全行を降順で処理（後ろから処理することで行番号がずれない）
+  for (let lineNum = lines.length; lineNum >= 1; lineNum--) {
+    const lineIndex = lineNum - 1; // 0ベースのインデックス
+    const line = lines[lineIndex];
     
-    for (const line of lines) {
+    if (!line) continue;
+    
+    // template部の処理
+    if (isInRanges(lineNum, templateRanges)) {
       if (line.includes('@vue-expect-error')) {
-        // コメントを削除
+        // インラインコメントを削除
         const processed = line.replace(/<!--\s*@vue-expect-error(?:\s+TS\d+)?\s*-->/g, '');
-        removeCount++;
         
-        // 削除後に空行になった場合はスキップ
+        // 削除後に空白行になる場合は行ごと削除
         if (processed.trim() === '') {
-          continue;
+          lines.splice(lineIndex, 1);
+          removeCount++;
+        } else {
+          // そうでなければインラインコメントのみ削除
+          lines[lineIndex] = processed;
+          removeCount++;
         }
-        processedLines.push(processed);
-        continue;
       }
-      processedLines.push(line);
+      continue;
     }
     
-    const newTemplateContent = processedLines.join('\n');
-    modifiedContent = modifiedContent.replace(templateContent, newTemplateContent);
-  }
-  
-  // script/scriptSetup内の@ts-expect-errorコメントを削除
-  const scripts = [descriptor.script, descriptor.scriptSetup].filter(Boolean);
-  for (const script of scripts) {
-    if (!script) continue;
-    
-    const scriptContent = script.content;
-    const lines = scriptContent.split('\n');
-    const filteredLines = lines.filter(line => {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith('// @ts-expect-error')) {
+    // script/scriptSetup部の処理
+    if (isInRanges(lineNum, scriptRanges)) {
+      if (line.trim().startsWith('// @ts-expect-error')) {
+        lines.splice(lineIndex, 1);
         removeCount++;
-        return false;
       }
-      return true;
-    });
-    
-    const newScriptContent = filteredLines.join('\n');
-    modifiedContent = modifiedContent.replace(scriptContent, newScriptContent);
+      continue;
+    }
   }
   
   // 変更があった場合のみファイルを更新
   if (removeCount > 0) {
-    writeFileSync(filePath, modifiedContent, 'utf-8');
+    writeFileSync(filePath, lines.join('\n'), 'utf-8');
     console.log(`  Removed ${removeCount} expect-error comments from ${filePath}`);
   }
 }

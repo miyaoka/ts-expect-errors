@@ -7,7 +7,7 @@ import {
   type ElementNode,
 } from "@vue/compiler-dom";
 import { readFileSync, writeFileSync } from "node:fs";
-import { isInRanges, type Range } from "../../../utils/range-utils";
+import { isInRanges, type Range, getVueSectionRanges } from "../../../utils/range-utils";
 import type { TsError } from "../core";
 
 /**
@@ -75,21 +75,7 @@ export function processVueExpectErrors(
   const sortedLines = Array.from(errorsByLine.keys()).sort((a, b) => b - a);
 
   // 各セクションの範囲を事前に定義
-  const scriptRanges: Range[] = [
-    sfc.descriptor.scriptSetup?.loc,
-    sfc.descriptor.script?.loc,
-  ]
-    .filter((loc) => loc != null)
-    .map((loc) => ({ start: loc.start.line, end: loc.end.line }));
-
-  const templateRanges: Range[] = sfc.descriptor.template?.loc
-    ? [
-        {
-          start: sfc.descriptor.template.loc.start.line,
-          end: sfc.descriptor.template.loc.end.line,
-        },
-      ]
-    : [];
+  const { templateRanges, scriptRanges } = getVueSectionRanges(sfc.descriptor);
 
   // template部で処理済みの位置を記録（同一位置への重複挿入を防ぐ）
   const templateProcessedPositions = new Set<string>();
