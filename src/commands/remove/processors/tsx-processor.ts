@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs';
-import { parseTsxFile, isInJsxElement } from "../../../tsx-utils";
+import { parseTsxFile } from "../../../utils/tsx-utils";
+import { isInRanges } from "../../../utils/range-utils";
 
 /**
  * TSXファイルから@ts-expect-errorコメントを削除
@@ -18,7 +19,7 @@ export function removeTsxExpectErrors(filePath: string): void {
     const trimmedLine = line.trim();
     
     // JSX要素内かどうかで処理を分ける
-    if (isInJsxElement(lineNum, jsxRanges)) {
+    if (isInRanges(lineNum, jsxRanges)) {
       // JSX内のブロックコメント形式のチェック
       if (line.includes('{/* @ts-expect-error')) {
         const processed = line.replace(/\{\/\*\s*@ts-expect-error(?:\s+TS\d+)?\s*\*\/\}/g, '');

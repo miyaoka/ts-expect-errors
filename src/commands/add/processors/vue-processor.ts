@@ -1,6 +1,14 @@
 import { parse } from "@vue/compiler-sfc";
-import { compile, NodeTypes } from "@vue/compiler-dom";
+import {
+  compile,
+  NodeTypes,
+  type RootNode,
+  type TemplateChildNode,
+  type ElementNode,
+} from "@vue/compiler-dom";
 import { readFileSync, writeFileSync } from "node:fs";
+import { isInRanges, type Range } from "../../../utils/range-utils";
+import type { TsError } from "../core";
 
 /**
  * Vue ファイルのエラー処理仕様
@@ -26,23 +34,16 @@ import { readFileSync, writeFileSync } from "node:fs";
  * → {{ error }} の直前にコメント（div の前ではない）
  */
 
-// TypeScriptエラー情報の型（core.tsと共通）
-interface TsError {
-  file: string;
-  line: number;
-  column: number;
-  code: string;
-  message: string;
-}
 
 /**
  * Vue ファイルのエラー抑制コメントを処理
  *
  * 処理順序：
  * 1. エラーを行ごとにグループ化
- * 2. 行番号の降順でソート（下から処理）
- * 3. script部のエラーを処理（行がずれるため先に処理）
- * 4. template部のエラーを処理（行がずれないため後で処理）
+ * 2. 行番号の降順でソート（下から処理して行番号のずれを防ぐ）
+ * 3. 各行のエラーを処理：
+ *    - template部: インラインでコメント挿入（同一位置への重複挿入を防ぐ）
+ *    - script部: 前の行にコメント挿入
  *
  * @param filePath 対象の .vue ファイルパス
  * @param errors vue-tsc で検出されたエラーのリスト
@@ -53,256 +54,182 @@ export function processVueExpectErrors(
 ): void {
   const source = readFileSync(filePath, "utf-8");
   const sfc = parse(source);
+  const lines = source.split("\n");
+
+  // templateのASTを一度だけコンパイル
+  const templateAst = sfc.descriptor.template
+    ? compile(sfc.descriptor.template.content, {
+        onError: () => {}, // エラーを無視
+      }).ast
+    : null;
 
   // エラーを行ごとにグループ化
   const errorsByLine = new Map<number, TsError[]>();
   for (const error of errors) {
-    const lineErrors = errorsByLine.get(error.line) || [];
-    lineErrors.push(error);
-    errorsByLine.set(error.line, lineErrors);
+    const existing = errorsByLine.get(error.line) || [];
+    existing.push(error);
+    errorsByLine.set(error.line, existing);
   }
 
-  // 行ごとのエラーを配列に変換し、各行のエラーは列番号降順でソート
-  const errorLines: Array<{ line: number; errors: TsError[] }> = [];
-  for (const [line, lineErrors] of errorsByLine) {
-    // 同一行のエラーは列番号の降順でソート（右から処理）
-    lineErrors.sort((a, b) => b.column - a.column);
-    errorLines.push({ line, errors: lineErrors });
-  }
+  // 行番号を降順でソート（後ろから処理することで行番号がずれない）
+  const sortedLines = Array.from(errorsByLine.keys()).sort((a, b) => b - a);
 
-  // 行番号の降順でソート（下から処理）
-  errorLines.sort((a, b) => b.line - a.line);
+  // 各セクションの範囲を事前に定義
+  const scriptRanges: Range[] = [
+    sfc.descriptor.scriptSetup?.loc,
+    sfc.descriptor.script?.loc,
+  ]
+    .filter((loc) => loc != null)
+    .map((loc) => ({ start: loc.start.line, end: loc.end.line }));
 
-  // エラーをtemplate部とscript部に分類
-  const templateErrorLines: Array<{ line: number; errors: TsError[] }> = [];
-  const scriptSetupErrorLines: Array<{ line: number; errors: TsError[] }> = [];
-  const scriptErrorLines: Array<{ line: number; errors: TsError[] }> = [];
+  const templateRanges: Range[] = sfc.descriptor.template?.loc
+    ? [
+        {
+          start: sfc.descriptor.template.loc.start.line,
+          end: sfc.descriptor.template.loc.end.line,
+        },
+      ]
+    : [];
 
-  for (const errorLine of errorLines) {
-    if (
-      sfc.descriptor.template &&
-      isInRange(errorLine.line, sfc.descriptor.template.loc)
-    ) {
-      templateErrorLines.push(errorLine);
+  // template部で処理済みの位置を記録（同一位置への重複挿入を防ぐ）
+  const templateProcessedPositions = new Set<string>();
+
+  for (const lineNum of sortedLines) {
+    const lineErrors = errorsByLine.get(lineNum);
+    if (!lineErrors) continue;
+
+    // template部の処理
+    if (isInRanges(lineNum, templateRanges)) {
+      // TS2578エラー（不要な@vue-expect-error）の場合は削除
+      if (lineErrors.some((e) => e.code === "TS2578")) {
+        const lineContent = lines[lineNum - 1];
+        if (lineContent) {
+          // @vue-expect-errorコメントを削除
+          const vueCommentPattern =
+            /<!--\s*@vue-expect-error(?:\s+TS\d+)?\s*-->/g;
+          const newContent = lineContent.replace(vueCommentPattern, "");
+          lines[lineNum - 1] = newContent;
+        }
+        continue;
+      }
+
+      // template内でのエラー処理（インラインコメント挿入）
+      if (templateAst) {
+        processTemplateLineErrors(
+          lines,
+          lineNum,
+          lineErrors,
+          sfc.descriptor.template,
+          templateAst,
+          filePath,
+          templateProcessedPositions
+        );
+      }
       continue;
     }
-    
-    if (
-      sfc.descriptor.scriptSetup &&
-      isInRange(errorLine.line, sfc.descriptor.scriptSetup.loc)
-    ) {
-      scriptSetupErrorLines.push(errorLine);
+
+    // script/script setup部の処理
+    if (isInRanges(lineNum, scriptRanges)) {
+      // TS2578エラー（不要な@ts-expect-error）の場合は削除
+      if (lineErrors.some((e) => e.code === "TS2578")) {
+        lines.splice(lineNum - 1, 1);
+        continue;
+      }
+
+      // script内でのエラー処理（前の行にコメント挿入）
+      const index = lineNum - 1;
+      const targetLine = lines[index];
+      const indent = targetLine?.match(/^(\s*)/)?.[1] || "";
+      const firstError = lineErrors[0];
+      if (firstError) {
+        const comment = `${indent}// @ts-expect-error ${firstError.code}`;
+        lines.splice(index, 0, comment);
+      }
       continue;
     }
-    
-    if (
-      sfc.descriptor.script &&
-      isInRange(errorLine.line, sfc.descriptor.script.loc)
-    ) {
-      scriptErrorLines.push(errorLine);
-    }
+
+    // いずれのセクションにも属さない場合は無視
   }
 
-  let result = source;
-
-  // script部のエラー処理（先に処理。行がずれるため）
-  // script setup部のエラー処理
-  if (scriptSetupErrorLines.length > 0 && sfc.descriptor.scriptSetup) {
-    result = processScriptErrors(
-      result,
-      sfc.descriptor.scriptSetup,
-      scriptSetupErrorLines
-    );
-  }
-
-  // script部のエラー処理
-  if (scriptErrorLines.length > 0 && sfc.descriptor.script) {
-    result = processScriptErrors(
-      result,
-      sfc.descriptor.script,
-      scriptErrorLines
-    );
-  }
-
-  // template部のエラー処理（最後に処理。行がずれないため）
-  if (templateErrorLines.length > 0 && sfc.descriptor.template) {
-    result = processTemplateErrors(
-      result,
-      sfc.descriptor.template,
-      templateErrorLines
-    );
-  }
-
-  writeFileSync(filePath, result);
+  // ファイルを更新
+  writeFileSync(filePath, lines.join("\n"));
 }
 
 /**
- * 行番号が指定範囲内かチェック
+ * template部の1行のエラー処理
  */
-function isInRange(
-  line: number,
-  loc: { start: { line: number }; end: { line: number } }
-): boolean {
-  return line >= loc.start.line && line <= loc.end.line;
-}
-
-/**
- * template部のエラー処理
- *
- * 処理内容：
- * - 同一行の各エラーすべてに対して処理
- * - 各エラー位置の直近の親要素またはマスタッシュの直前にコメント挿入
- * - 行がずれないため、右から処理（列番号降順）
- *
- * @param source ファイル全体のソース
- * @param template templateディスクリプタ
- * @param errorLines 行ごとにグループ化されたエラー（行番号降順）
- */
-function processTemplateErrors(
-  source: string,
+function processTemplateLineErrors(
+  lines: string[],
+  lineNum: number,
+  lineErrors: TsError[],
   template: any,
-  errorLines: Array<{ line: number; errors: TsError[] }>
-): string {
-  // templateのASTを解析
-  const compileResult = compile(template.content, {
-    onError: () => {}, // エラーを無視
-  });
+  ast: RootNode,
+  filePath: string,
+  processedPositions: Set<string>
+): void {
+  // templateの開始行（1ベース）
+  const templateStartLine = template.loc.start.line;
 
-  // compileの結果はastプロパティを含むオブジェクト
-  const ast = compileResult.ast;
+  // 同一行の各エラーを処理（列番号降順）
+  const sortedErrors = lineErrors.sort((a, b) => b.column - a.column);
 
-  let result = source;
-  const lines = result.split("\n");
+  for (const error of sortedErrors) {
+    // template内での相対行番号（1ベース）
+    const relativeLineInTemplate = error.line - template.loc.start.line + 1;
 
-  // templateの開始行（0ベース）
-  const templateStartLine = template.loc.start.line - 1;
+    // エラー位置を含むノードを探す
+    const targetNode = findNodeAtPosition(
+      ast,
+      relativeLineInTemplate,
+      error.column,
+      0,
+      filePath
+    );
 
-  // 処理済みの位置を追跡（同じ位置に複数のコメントを入れないため）
-  const processedPositions = new Set<string>();
+    if (targetNode) {
+      // エラー位置（ファイル全体での行番号、1ベース）
+      let errorLine: number;
+      let errorColumn: number;
 
-  // 各行のエラーを処理（行番号降順）
-  for (const { line, errors } of errorLines) {
-    // TS2578エラー（不要な@vue-expect-error）の場合は削除
-    if (errors.some((e) => e.code === "TS2578")) {
-      const lineIndex = line - 1;
+      // 属性エラーの場合は要素の開始位置を使用
+      if (
+        targetNode.type === NodeTypes.ELEMENT &&
+        isErrorInAttribute(targetNode, relativeLineInTemplate, error.column)
+      ) {
+        // 属性エラーの場合、要素の開始位置を使用
+        errorLine = templateStartLine + targetNode.loc.start.line - 1;
+        errorColumn = targetNode.loc.start.column;
+      } else {
+        // それ以外（マスタッシュなど）の場合、ノードの開始位置を使用
+        errorLine = templateStartLine + targetNode.loc.start.line - 1;
+        errorColumn = targetNode.loc.start.column;
+      }
+
+      // 位置をキーとして使用
+      const positionKey = `${errorLine}:${errorColumn}`;
+
+      // 同一位置に既にコメントを挿入済みの場合はスキップ（複数属性エラーなどは要素に対して単一コメントにする）
+      if (processedPositions.has(positionKey)) {
+        continue;
+      }
+      processedPositions.add(positionKey);
+
+      // 配列・文字列操作用インデックス（0ベース）
+      const lineIndex = errorLine - 1;
+      const columnIndex = errorColumn - 1;
+
+      // コメントを挿入
+      const comment = `<!-- @vue-expect-error ${error.code} -->`;
+
+      // 同一行にコメントを挿入
       const lineContent = lines[lineIndex];
       if (lineContent) {
-        // @vue-expect-errorコメントを削除
-        const vueCommentPattern =
-          /<!--\s*@vue-expect-error(?:\s+TS\d+)?\s*-->/g;
-        const newContent = lineContent.replace(vueCommentPattern, "");
-        // 空行になる場合は削除
-        if (newContent.trim() === "") {
-          lines.splice(lineIndex, 1);
-          continue;
-        }
-        lines[lineIndex] = newContent;
-      }
-      continue;
-    }
-    // 同一行の各エラーを処理（列番号降順）
-    for (const error of errors) {
-      // template内での相対行番号（1ベース）
-      const relativeLineInTemplate = error.line - template.loc.start.line + 1;
-
-      // エラー位置を含むノードを探す
-      const targetNode = findNodeAtPosition(
-        ast,
-        relativeLineInTemplate,
-        error.column
-      );
-
-      if (targetNode) {
-        // コメント挿入位置を決定
-        const insertLine = templateStartLine + targetNode.loc.start.line - 1;
-        const insertColumn = targetNode.loc.start.column - 1;
-        const positionKey = `${insertLine}:${insertColumn}`;
-
-        // 既に処理済みの位置はスキップ
-        if (processedPositions.has(positionKey)) {
-          continue;
-        }
-
-        // 既存のコメントをチェック（挿入位置周辺も確認）
-        const lineContent = lines[insertLine];
-        if (lineContent) {
-          // 挿入位置の前後30文字をチェック
-          const checkStart = Math.max(0, insertColumn - 30);
-          const checkEnd = Math.min(lineContent.length, insertColumn + 30);
-          const nearbyContent = lineContent.slice(checkStart, checkEnd);
-          if (nearbyContent.includes("@vue-expect-error")) {
-            continue;
-          }
-        }
-
-        // コメントを挿入
-        const comment = `<!-- @vue-expect-error TS${error.code} -->`;
-
-        // 同一行にコメントを挿入
-        if (lineContent) {
-          const before = lineContent.slice(0, insertColumn);
-          const after = lineContent.slice(insertColumn);
-          lines[insertLine] = before + comment + after;
-        }
-
-        processedPositions.add(positionKey);
+        const before = lineContent.slice(0, columnIndex);
+        const after = lineContent.slice(columnIndex);
+        lines[lineIndex] = before + comment + after;
       }
     }
   }
-
-  return lines.join("\n");
-}
-
-/**
- * script部のエラー処理
- *
- * 処理内容：
- * - 同一行に複数エラーがある場合は先頭（最小列番号）のエラーのみ処理
- * - エラー行の前の行に @ts-expect-error コメントを挿入
- * - 行がずれるため、下から処理（行番号降順）
- *
- * @param source ファイル全体のソース
- * @param script scriptディスクリプタ
- * @param errorLines 行ごとにグループ化されたエラー（行番号降順）
- */
-function processScriptErrors(
-  source: string,
-  script: any,
-  errorLines: Array<{ line: number; errors: TsError[] }>
-): string {
-  const lines = source.split("\n");
-
-  for (const { line, errors } of errorLines) {
-    const lineIndex = line - 1;
-
-    // TS2578エラー（不要な@ts-expect-error）の場合は削除
-    if (errors.some((e) => e.code === "TS2578")) {
-      // 該当行を削除（0ベースインデックス）
-      lines.splice(lineIndex, 1);
-      continue;
-    }
-
-    const lineContent = lines[lineIndex];
-
-    // 既に@ts-expect-errorがある行はスキップ
-    if (lineContent && lineContent.includes("@ts-expect-error")) {
-      continue;
-    }
-
-    // 同一行の複数エラーから先頭（最小列番号）のエラーを取得
-    // errorsは列番号降順なので、最後の要素が最小列番号
-    const firstError = errors.at(-1);
-    if (!firstError) continue;
-
-    // インデントを取得
-    const indent = lineContent?.match(/^(\s*)/)?.[1] || "";
-
-    // コメントを挿入
-    const comment = `${indent}// @ts-expect-error TS${firstError.code}`;
-    lines.splice(lineIndex, 0, comment);
-  }
-
-  return lines.join("\n");
 }
 
 /**
@@ -313,11 +240,12 @@ function processScriptErrors(
  * @returns エラー位置を含む最も深いノード、またはnull
  */
 function findNodeAtPosition(
-  node: any,
+  node: TemplateChildNode | RootNode,
   line: number,
   column: number,
-  depth: number = 0
-): any {
+  depth: number = 0,
+  filePath: string = ""
+): TemplateChildNode | null {
   if (!node || !node.loc) {
     return null;
   }
@@ -331,37 +259,56 @@ function findNodeAtPosition(
   let bestChild = null;
 
   // IFノードのbranches
-  if (node.branches) {
+  if (node.type === NodeTypes.IF && node.branches) {
     for (const branch of node.branches) {
-      const result = findNodeAtPosition(branch, line, column, depth + 1);
+      const result = findNodeAtPosition(
+        branch,
+        line,
+        column,
+        depth + 1,
+        filePath
+      );
       if (result) bestChild = result;
     }
   }
 
-  // 通常のchildren
-  if (node.children && Array.isArray(node.children)) {
+  // 通常のchildren（ROOT, ELEMENT, IF_BRANCH, FOR, COMPOUNDなど）
+  if ("children" in node && node.children && Array.isArray(node.children)) {
     for (const child of node.children) {
-      if (typeof child === "object" && child !== null) {
-        const result = findNodeAtPosition(child, line, column, depth + 1);
+      // CompoundExpressionNodeのchildrenにはSimpleExpressionNodeや文字列も含まれる
+      // SimpleExpressionNodeはTemplateChildNodeではないのでスキップ
+      if (
+        typeof child === "object" &&
+        child !== null &&
+        child.type !== NodeTypes.SIMPLE_EXPRESSION
+      ) {
+        const result = findNodeAtPosition(
+          child,
+          line,
+          column,
+          depth + 1,
+          filePath
+        );
         if (result) bestChild = result;
       }
     }
   }
 
-  // TEXT_CALLのcontent
-  if ((node as any).content) {
+  // TEXT_CALLのcontent（InterpolationNodeを持つ）
+  if (node.type === NodeTypes.TEXT_CALL) {
     const result = findNodeAtPosition(
-      (node as any).content,
+      node.content,
       line,
       column,
-      depth + 1
+      depth + 1,
+      filePath
     );
     if (result) bestChild = result;
   }
 
   // IF_BRANCHのcondition
-  if (node.type === NodeTypes.IF_BRANCH && node.condition) {
-    const condLoc = node.condition.loc;
+  if (node.type === NodeTypes.IF_BRANCH) {
+    const condLoc = node.condition?.loc;
     if (condLoc) {
       const condContainsError =
         (line > condLoc.start.line ||
@@ -369,7 +316,7 @@ function findNodeAtPosition(
         (line < condLoc.end.line ||
           (line === condLoc.end.line && column <= condLoc.end.column));
       if (condContainsError) {
-        // conditionにエラーが含まれる場合、IFノードを返す
+        // conditionにエラーが含まれる場合、IF_BRANCHノードを返す
         return node;
       }
     }
@@ -377,15 +324,8 @@ function findNodeAtPosition(
 
   // 子ノードが見つかった場合
   if (bestChild) {
-    // v-if/v-for属性エラーの場合、親のIF/FORノードを返す
-    if (
-      bestChild.type === NodeTypes.ELEMENT &&
-      isErrorInAttribute(bestChild, line, column)
-    ) {
-      if (node.type === NodeTypes.IF || node.type === NodeTypes.FOR) {
-        return node;
-      }
-    }
+    // 子ノードをそのまま返す
+    // IFノードやFORノードに遡らない
     return bestChild;
   }
 
@@ -408,40 +348,64 @@ function findNodeAtPosition(
     return null;
   }
 
-  // ノードタイプ別の判定
-  if (
-    node.type === NodeTypes.INTERPOLATION ||
-    node.type === NodeTypes.TEXT ||
-    node.type === NodeTypes.COMMENT
-  ) {
-    return node;
+  // ELEMENTの属性エラーの判定を先に行う
+  if (node.type === NodeTypes.ELEMENT) {
+    if (isErrorInAttribute(node, line, column)) {
+      return node;
+    }
   }
 
-  if (
-    node.type === NodeTypes.ELEMENT &&
-    isErrorInAttribute(node, line, column)
-  ) {
-    return node;
+  // ROOTノードは返さない
+  if (node.type === NodeTypes.ROOT) {
+    return null;
   }
 
-  return null;
+  // この時点でnodeはTemplateChildNodeのいずれか
+  return node;
 }
 
 /**
  * エラーが要素の属性部分にあるかチェック
  */
 function isErrorInAttribute(
-  element: any,
+  element: ElementNode,
   line: number,
   column: number
 ): boolean {
-  if (element.type !== NodeTypes.ELEMENT) {
+  const { start, end } = element.loc;
+
+  // 要素が複数行にまたがる場合
+  if (start.line !== end.line) {
+    // エラー行が要素の開始行と終了行の間にある場合
+    if (line > start.line && line < end.line) {
+      // 子要素がある場合、子要素の開始より前ならば属性エラー
+      if (element.children && element.children.length > 0) {
+        const firstChild = element.children[0];
+        if (
+          typeof firstChild === "object" &&
+          firstChild !== null &&
+          firstChild.loc
+        ) {
+          // エラーが子要素の開始行より前、または同じ行で子要素の開始列より前
+          return (
+            line < firstChild.loc.start.line ||
+            (line === firstChild.loc.start.line &&
+              column < firstChild.loc.start.column)
+          );
+        }
+      }
+      // 子要素がない場合は属性エラーと判定
+      return true;
+    }
+    // エラーが開始行にある場合
+    if (line === start.line) {
+      return column >= start.column;
+    }
+    // エラーが終了行にある場合（閉じタグなど）、属性エラーではない
     return false;
   }
 
-  // 要素の開始タグ内かつ、子要素の前であれば属性エラーと判定
-  const { start } = element.loc;
-
+  // 単一行の要素の場合
   // 子要素がある場合、その開始位置を取得
   let childStartColumn = element.loc.end.column;
   if (element.children && element.children.length > 0) {

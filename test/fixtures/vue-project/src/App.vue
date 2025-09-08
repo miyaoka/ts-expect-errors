@@ -32,8 +32,19 @@ const incorrect: string = 123;
       <div v-if="undefinedCondition">条件付きコンテンツ</div>
     </div>
 
+    <!-- 属性エラー -->
+    <div @click="error" />
+
     <!-- 属性エラー + マスタッシュエラー -->
+    <div @click="error">条件付きコンテンツ{{ error1 }}</div>
+
+    <!-- v-ifエラー + マスタッシュエラー -->
     <div v-if="undefinedCondition">条件付きコンテンツ{{ error1 }}</div>
+
+    <!-- v-ifの中でエラー -->
+    <div v-if="error">
+      <div @click="error">{{ error }}</div>
+    </div>
 
     <!-- マスタッシュエラー（マスタッシュの直前で抑制すべき） -->
     <p>{{ undefinedVar }}</p>

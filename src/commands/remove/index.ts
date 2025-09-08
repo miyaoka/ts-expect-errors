@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { removeTsExpectErrors } from "./processors/ts-processor";
 import { removeTsxExpectErrors } from "./processors/tsx-processor";
 import { removeVueExpectErrors } from "./processors/vue-processor";
-import { isVueFile, isTsxFile } from "../../utils";
+import { isVueFile, isTsxFile } from "../../utils/file-types";
 
 export const removeCommand = define({
   name: "remove",

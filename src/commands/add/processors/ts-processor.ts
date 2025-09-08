@@ -1,13 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-
-// TypeScriptエラー情報の型
-interface TsError {
-  file: string;
-  line: number;
-  column: number;
-  code: string;
-  message: string;
-}
+import type { TsError } from "../core";
 
 /**
  * TypeScript ファイル（.ts）かどうか判定

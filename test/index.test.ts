@@ -11,8 +11,8 @@ import {
 // すべてのフィクスチャの定義
 const FIXTURES = [
   { name: "ts-only", checker: "tsc" },
+  { name: "react-project", checker: "tsc" },
   { name: "vue-project", checker: "vue-tsc" },
-  { name: "react-project", checker: "tsc" }, // TSX対応をテスト
 ] as const;
 
 beforeAll(async () => {

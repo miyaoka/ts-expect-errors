@@ -1,14 +1,7 @@
 import { writeFileSync } from "node:fs";
-import { parseTsxFile, isInJsxElement } from "../../../tsx-utils";
-
-// TypeScriptエラー情報の型
-interface TsError {
-  file: string;
-  line: number;
-  column: number;
-  code: string;
-  message: string;
-}
+import { parseTsxFile } from "../../../utils/tsx-utils";
+import { isInRanges } from "../../../utils/range-utils";
+import type { TsError } from "../core";
 
 // TSXファイルのエラー抑制コメントを処理
 export function processTsxExpectErrors(
@@ -52,7 +45,7 @@ export function processTsxExpectErrors(
     if (!firstError) continue;
 
     // エラー行がJSX範囲内かチェック
-    const isInJsx = isInJsxElement(lineNum, jsxRanges);
+    const isInJsx = isInRanges(lineNum, jsxRanges);
 
     const comment = isInJsx
       ? `${indent}{/* @ts-expect-error ${firstError.code} */}`

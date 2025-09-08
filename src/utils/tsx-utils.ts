@@ -1,13 +1,7 @@
 import * as ts from "typescript";
 import { readFileSync } from "node:fs";
+import { type Range } from "./range-utils";
 
-/**
- * JSX要素の範囲情報
- */
-export interface JsxRange {
-  start: number;
-  end: number;
-}
 
 /**
  * TSXファイル解析結果
@@ -16,7 +10,7 @@ export interface TsxParseResult {
   content: string;
   lines: string[];
   sourceFile: ts.SourceFile;
-  jsxRanges: JsxRange[];
+  jsxRanges: Range[];
 }
 
 /**
@@ -49,8 +43,8 @@ export function parseTsxFile(filePath: string): TsxParseResult {
 /**
  * TSXファイルからJSX要素の範囲を収集
  */
-export function collectJsxRanges(sourceFile: ts.SourceFile): JsxRange[] {
-  const jsxRanges: JsxRange[] = [];
+export function collectJsxRanges(sourceFile: ts.SourceFile): Range[] {
+  const jsxRanges: Range[] = [];
 
   function collect(node: ts.Node): void {
     // JSX要素（通常のJSX、自己完結型、Fragment）の範囲を収集
@@ -70,11 +64,3 @@ export function collectJsxRanges(sourceFile: ts.SourceFile): JsxRange[] {
   return jsxRanges;
 }
 
-/**
- * 行番号がJSX要素の範囲内かチェック
- */
-export function isInJsxElement(lineNum: number, jsxRanges: JsxRange[]): boolean {
-  return jsxRanges.some(
-    (range) => lineNum >= range.start && lineNum <= range.end
-  );
-}

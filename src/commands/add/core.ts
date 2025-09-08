@@ -4,10 +4,10 @@ import { readFile, exists } from "node:fs/promises";
 import { processTsExpectErrors } from "./processors/ts-processor";
 import { processTsxExpectErrors } from "./processors/tsx-processor";
 import { processVueExpectErrors } from "./processors/vue-processor";
-import { isVueFile, isTsxFile } from "../../utils";
+import { isVueFile, isTsxFile } from "../../utils/file-types";
 
 // TypeScriptエラー情報の型
-interface TsError {
+export interface TsError {
   file: string;
   line: number;
   column: number;
@@ -71,14 +71,26 @@ async function readTscOutputFromFile(logFilePath: string): Promise<string | null
 async function runTypeScriptChecker(projectPath: string, checker: string): Promise<string | null> {
   console.log(`Running ${checker} in ${projectPath}...`);
   
-  const result = await $`npx ${checker} --noEmit`.cwd(projectPath).nothrow().quiet();
-  
-  if (result.exitCode === 0) {
-    console.log('No TypeScript errors found.');
-    return null;
+  try {
+    console.log(`Executing: npx ${checker} --noEmit in ${projectPath}`);
+    const result = await $`npx ${checker} --noEmit`.cwd(projectPath).nothrow();
+    
+    if (result.exitCode === 0) {
+      console.log('No TypeScript errors found.');
+      return null;
+    }
+    
+    if (result.exitCode === 127) {
+      console.error(`Command not found: ${checker}`);
+      console.error('stderr:', result.stderr.toString());
+      throw new Error(`${checker} command not found in ${projectPath}`);
+    }
+    
+    return result.stdout.toString();
+  } catch (error) {
+    console.error(`Error running ${checker}:`, error);
+    throw error;
   }
-  
-  return result.stdout.toString();
 }
 
 
