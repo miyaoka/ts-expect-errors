@@ -152,6 +152,32 @@ const incorrect: string = 123;
     ></div>
     <div v-else class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"></div>
   </div>
+
+  <!-- nestされたv-ifでのエラー -->
+  <div v-if="true" class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">
+    <div
+      class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      @click="error"
+    ></div>
+  </div>
+  <div
+    v-else
+    class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    @click="error"
+  >
+    <div
+      class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      @click="error"
+    ></div>
+  </div>
+
+  <!-- v-for -->
+  <div
+    v-for="(val, i) in [0, 1, 2]"
+    :key="`${i}`"
+    class="selection"
+    :style="val"
+  ></div>
 </template>
 
 <!-- 複数script -->
