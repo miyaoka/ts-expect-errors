@@ -121,6 +121,36 @@ const incorrect: string = 123;
         </div>
       </div>
     </div>
+
+    <!-- v-ifでのエラー -->
+    <div
+      v-if="true"
+      class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      @click="error"
+    ></div>
+
+    <!-- v-elseでのエラー -->
+    <div
+      v-if="true"
+      class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ></div>
+    <div
+      v-else
+      class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      @click="error"
+    ></div>
+
+    <!-- v-else-ifでのエラー -->
+    <div
+      v-if="true"
+      class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ></div>
+    <div
+      v-else-if="true"
+      class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      @click="error"
+    ></div>
+    <div v-else class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"></div>
   </div>
 </template>
 
