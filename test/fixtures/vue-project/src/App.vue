@@ -157,18 +157,25 @@ const incorrect: string = 123;
   <div v-if="true" class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">
     <div
       class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      @click="error"
+      @click="error1"
     ></div>
   </div>
   <div
     v-else
     class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    @click="error"
+    @click="error2"
   >
     <div
       class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      @click="error"
-    ></div>
+      @click="error3"
+    >
+      <div
+        class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        @click="error4"
+      >
+        {{ error5 }}
+      </div>
+    </div>
   </div>
 
   <!-- v-for -->

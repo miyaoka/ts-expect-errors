@@ -7,7 +7,7 @@ import {
   type ElementNode,
 } from "@vue/compiler-dom";
 import { readFileSync, writeFileSync } from "node:fs";
-import { isInRanges, type Range, getVueSectionRanges } from "../../../utils/range-utils";
+import { isInRanges, getVueSectionRanges } from "../../../utils/range-utils";
 import type { TsError } from "../core";
 
 /**
@@ -33,7 +33,6 @@ import type { TsError } from "../core";
  * エラー: <div>テキスト{{ error }}</div> の error
  * → {{ error }} の直前にコメント（div の前ではない）
  */
-
 
 /**
  * Vue ファイルのエラー抑制コメントを処理
@@ -103,7 +102,6 @@ export function processVueExpectErrors(
       if (templateAst) {
         processTemplateLineErrors(
           lines,
-          lineNum,
           lineErrors,
           sfc.descriptor.template,
           templateAst,
@@ -146,7 +144,6 @@ export function processVueExpectErrors(
  */
 function processTemplateLineErrors(
   lines: string[],
-  lineNum: number,
   lineErrors: TsError[],
   template: any,
   ast: RootNode,
@@ -252,13 +249,14 @@ function findNodeAtPosition(
       const branch = node.branches[i];
       if (branch) {
         // v-else/v-else-ifのブランチ（index > 0）の場合、IFノードを親として渡す
+        const isElseBranch = i > 0;
         const result = findNodeAtPosition(
           branch,
           line,
           column,
           depth + 1,
           filePath,
-          i > 0 ? node : null // v-else/v-else-ifの場合のみIFノードを渡す
+          isElseBranch ? node : parentIfNode // v-else/v-else-ifの場合はIFノードを、そうでない場合は現在のparentIfNodeを渡す
         );
         if (result) bestChild = result;
       }
@@ -319,6 +317,21 @@ function findNodeAtPosition(
         return node;
       }
     }
+
+    // v-else/v-else-ifブランチの直接の子要素（v-else/v-else-if要素自体）のエラーの場合
+    if (parentIfNode && node.children && node.children.length > 0) {
+      const firstChild = node.children[0];
+      if (
+        firstChild &&
+        firstChild.type === NodeTypes.ELEMENT &&
+        firstChild.loc
+      ) {
+        // この要素の属性エラーかチェック
+        if (isErrorInAttribute(firstChild, line, column)) {
+          return parentIfNode;
+        }
+      }
+    }
   }
 
   // 子ノードが見つかった場合
@@ -326,18 +339,6 @@ function findNodeAtPosition(
     // 子ノードをそのまま返す
     // IFノードやFORノードに遡らない
     return bestChild;
-  }
-  
-  // v-else/v-else-ifの要素内でエラーが見つかった場合、親のIFノードを返す
-  if (parentIfNode && node.type === NodeTypes.ELEMENT) {
-    // エラーが要素内にある場合
-    const { start, end } = node.loc;
-    const isInRange =
-      (line > start.line || (line === start.line && column >= start.column)) &&
-      (line < end.line || (line === end.line && column <= end.column));
-    if (isInRange) {
-      return parentIfNode;
-    }
   }
 
   // 子ノードがない場合、エラー行と一致するノードのみ返す
