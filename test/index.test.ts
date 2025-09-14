@@ -6,14 +6,15 @@ import {
   TEST_PROCESSED_DIR,
   runTestWithLogs,
   setupFixture,
+  type FixtureOptions,
 } from "./test-utils";
 
 // すべてのフィクスチャの定義
-const FIXTURES = [
-  { name: "ts-only", checker: "tsc" },
-  { name: "react-project", checker: "tsc" },
-  { name: "vue-project", checker: "vue-tsc" },
-] as const;
+const FIXTURES: FixtureOptions[] = [
+  { name: "ts-only", useLogFile: true },
+  { name: "react-project" },
+  { name: "vue-project" },
+];
 
 beforeAll(async () => {
   // テスト開始時に一度だけ一時ディレクトリをクリーンアップ
@@ -26,16 +27,13 @@ beforeAll(async () => {
 });
 
 // 各フィクスチャに対してテストを生成
-FIXTURES.forEach(({ name, checker }) => {
-  test(`${name}: ${checker}でエラーを抑制し、処理後はエラーゼロになることを確認`, async () => {
-    await runTestWithLogs(name, checker);
+FIXTURES.forEach((fixture) => {
+  test(`${fixture.name}: エラーを抑制し、処理後はエラーゼロになることを確認`, async () => {
+    await runTestWithLogs(fixture);
 
     // 処理後のディレクトリに対して型チェックを実行し、エラーが0になることを確認
-    const afterDir = resolve(TEST_PROCESSED_DIR, name);
-    const result = await $`npx ${checker} --noEmit`
-      .cwd(afterDir)
-      .nothrow()
-      .quiet();
+    const afterDir = resolve(TEST_PROCESSED_DIR, fixture.name);
+    const result = await $`bun run typecheck`.cwd(afterDir).nothrow().quiet();
 
     // 処理後のtsc/vue-tsc出力をファイルに保存
     const tscOutputAfter = result.stdout.toString() || "No errors found";
@@ -46,7 +44,7 @@ FIXTURES.forEach(({ name, checker }) => {
 
     // エラーが残っていたら詳細を表示（デバッグ用）
     if (result.exitCode !== 0) {
-      console.error(`${name}: 処理後もエラーが残っています`);
+      console.error(`${fixture.name}: 処理後もエラーが残っています`);
       console.error(result.stdout.toString());
     }
   });
