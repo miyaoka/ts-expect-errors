@@ -9,16 +9,37 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 
+// CLIを実行する関数
+async function executeCli(
+  useLogFile: boolean | undefined,
+  tscOutputFile: string,
+  afterDir: string
+) {
+  if (useLogFile) {
+    return await $`bun run src/index.ts --target ${afterDir} --log-file ${tscOutputFile}`
+      .nothrow()
+      .quiet();
+  }
+
+  return await $`cat ${tscOutputFile} | bun run src/index.ts --target ${afterDir}`
+    .nothrow()
+    .quiet();
+}
+
 // CLIで処理されたテストフィクスチャのディレクトリ
 export const TEST_PROCESSED_DIR = "test/fixtures-processed";
 
+// フィクスチャ実行オプションの型
+export interface FixtureOptions {
+  name: string;
+  useLogFile?: boolean;
+}
+
 // ログを記録する共通関数
-export async function runTestWithLogs(
-  fixtureName: string,
-  checkerOption?: string
-) {
-  const fixtureDir = `test/fixtures/${fixtureName}`;
-  const afterDir = join(TEST_PROCESSED_DIR, fixtureName);
+export async function runTestWithLogs(options: FixtureOptions) {
+  const { name } = options;
+  const fixtureDir = `test/fixtures/${name}`;
+  const afterDir = join(TEST_PROCESSED_DIR, name);
 
   // afterディレクトリを作成してコピー
   copyDirectory(fixtureDir, afterDir);
@@ -28,14 +49,11 @@ export async function runTestWithLogs(
     await $`bun install`.cwd(afterDir).quiet();
   }
 
-  // tscを実行してエラーを取得（処理前の状態）
-  const checker = checkerOption || "tsc";
-  const tscResult = await $`npx ${checker} --noEmit`
-    .cwd(afterDir)
-    .nothrow()
-    .quiet();
+  // typecheckを実行してエラーを取得（処理前の状態）
+  const tscResult = await $`bun run typecheck`.cwd(afterDir).nothrow().quiet();
   const tscOutput = tscResult.stdout.toString() || "No errors found";
-  writeFileSync(join(afterDir, "tsc-output-before.txt"), tscOutput);
+  const tscOutputFile = join(afterDir, "tsc-output-before.txt");
+  writeFileSync(tscOutputFile, tscOutput);
 
   // エラーがあったファイルのパスを抽出
   const errorFiles = new Set<string>();
@@ -48,10 +66,11 @@ export async function runTestWithLogs(
   }
 
   // CLIを実行してエラーを抑制
-  const args = checkerOption
-    ? ["--project", afterDir, `--checker=${checkerOption}`]
-    : ["--project", afterDir];
-  const cliResult = await $`bun run src/index.ts ${args}`.nothrow().quiet();
+  const cliResult = await executeCli(
+    options.useLogFile,
+    tscOutputFile,
+    afterDir
+  );
 
   if (cliResult.exitCode !== 0) {
     throw new Error(`CLI failed with exit code ${cliResult.exitCode}`);
