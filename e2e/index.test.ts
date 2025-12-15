@@ -22,7 +22,7 @@ beforeAll(async () => {
 
   // 全フィクスチャの依存関係を事前にインストール
   await Promise.all(
-    FIXTURES.map((fixture) => setupFixture(`test/fixtures/${fixture.name}`))
+    FIXTURES.map((fixture) => setupFixture(`e2e/fixtures/${fixture.name}`))
   );
 });
 

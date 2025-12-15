@@ -3,6 +3,6 @@ minimumReleaseAge = 259200 # 3 days in seconds
 
 [test]
 # src2フォルダをテスト対象から除外
-# testフォルダ内のテストファイルのみを対象とする
-root = "./test"
-preload = ["./test/setup.ts"]
+# e2eフォルダ内のテストファイルのみを対象とする
+root = "./e2e"
+preload = ["./e2e/setup.ts"]

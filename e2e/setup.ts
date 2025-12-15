@@ -5,7 +5,7 @@ import { readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { $ } from "bun";
 
-const FIXTURES_DIR = "test/fixtures";
+const FIXTURES_DIR = "e2e/fixtures";
 
 // フィクスチャディレクトリを取得
 const fixtures = readdirSync(FIXTURES_DIR, { withFileTypes: true })
