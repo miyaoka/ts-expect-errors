@@ -18,7 +18,7 @@
 
 ### テスト実行に関する注意
 
-- **test/fixtures-processed の手動クリーンアップは不要**
+- **e2e/fixtures-processed の手動クリーンアップは不要**
 - テストの beforeAll で自動的にクリーンアップされる
 - 手動で rm するのは無駄な作業
 
@@ -32,8 +32,8 @@
 
 **テスト実行時に vue-tsc や tsc の結果はログファイルに出力される。**
 
-- `test/fixtures-processed/<fixture-name>/tsc-output-before.txt` - 処理前の tsc/vue-tsc エラー
-- `test/fixtures-processed/<fixture-name>/tsc-output-after.txt` - 処理後の tsc/vue-tsc エラー
+- `e2e/fixtures-processed/<fixture-name>/tsc-output-before.txt` - 処理前の tsc/vue-tsc エラー
+- `e2e/fixtures-processed/<fixture-name>/tsc-output-after.txt` - 処理後の tsc/vue-tsc エラー
 - 個別に vue-tsc や tsc を実行する必要はない。テストログをよく確認すること。
 
 **エラー行のノードは全探索する**

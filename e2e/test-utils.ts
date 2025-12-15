@@ -27,7 +27,7 @@ async function executeCli(
 }
 
 // CLIで処理されたテストフィクスチャのディレクトリ
-export const TEST_PROCESSED_DIR = "test/fixtures-processed";
+export const TEST_PROCESSED_DIR = "e2e/fixtures-processed";
 
 // フィクスチャ実行オプションの型
 export interface FixtureOptions {
@@ -38,7 +38,7 @@ export interface FixtureOptions {
 // ログを記録する共通関数
 export async function runTestWithLogs(options: FixtureOptions) {
   const { name } = options;
-  const fixtureDir = `test/fixtures/${name}`;
+  const fixtureDir = `e2e/fixtures/${name}`;
   const afterDir = join(TEST_PROCESSED_DIR, name);
 
   // afterディレクトリを作成してコピー
