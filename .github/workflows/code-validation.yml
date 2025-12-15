@@ -1,0 +1,51 @@
+# コード品質検証ワークフロー
+# プルリクエスト時にTypeScriptの型チェックとテストを並列実行
+name: Code Validation
+
+on:
+  pull_request: # プルリクエスト作成・更新時にトリガー
+
+jobs:
+  # 変更されたファイルパスを検出
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      typescript: ${{ steps.changes.outputs.typescript }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: changes
+        with:
+          filters: |
+            typescript:
+              - '**/*.ts'
+              - '**/*.tsx'
+              - 'tsconfig.json'
+              - 'package.json'
+              - 'bun.lock'
+
+  # TypeScriptの型チェック（TypeScript関連ファイル変更時のみ実行）
+  typecheck:
+    name: TypeScript Check
+    needs: changes
+    if: ${{ needs.changes.outputs.typescript == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      # リポジトリのチェックアウト
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      # Bun環境の共通セットアップ
+      - uses: ./.github/actions/setup-bun
+      # TypeScriptの型チェック実行
+      - run: bun run typecheck
+
+  # テスト実行
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      # リポジトリのチェックアウト
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      # Bun環境の共通セットアップ
+      - uses: ./.github/actions/setup-bun
+      # テスト実行
+      - run: bun test
