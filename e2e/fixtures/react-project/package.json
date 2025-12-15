@@ -9,7 +9,7 @@
   "devDependencies": {
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7",
-    "typescript": "^5.0.0"
+    "typescript": "5.9.3"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
