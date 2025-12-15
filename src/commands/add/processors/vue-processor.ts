@@ -319,6 +319,7 @@ function findNodeAtPosition(
     }
 
     // v-else/v-else-ifブランチの直接の子要素（v-else/v-else-if要素自体）のエラーの場合
+    // 各要素の直前にコメントを挿入する必要があるため、要素自体を返す
     if (parentIfNode && node.children && node.children.length > 0) {
       const firstChild = node.children[0];
       if (
@@ -328,7 +329,7 @@ function findNodeAtPosition(
       ) {
         // この要素の属性エラーかチェック
         if (isErrorInAttribute(firstChild, line, column)) {
-          return parentIfNode;
+          return firstChild;
         }
       }
     }
