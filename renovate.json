@@ -3,5 +3,6 @@
   "extends": ["config:best-practices"],
   "labels": ["dependencies"],
   "assignees": ["miyaoka"],
-  "reviewers": ["miyaoka"]
+  "reviewers": ["miyaoka"],
+  "includePaths": [".", "test/fixtures/*"]
 }
