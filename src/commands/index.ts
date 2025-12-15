@@ -1,12 +1,12 @@
 import { cli } from "gunshi";
-import type { Args, Command } from "gunshi";
+import type { Command } from "gunshi";
 import { addCommand } from "./add";
 import { removeCommand } from "./remove";
 import { name, version } from "../../package.json";
 
 export async function run(): Promise<void> {
   // サブコマンドMapを作成
-  const subCommands = new Map<string, Command<Args>>();
+  const subCommands = new Map<string, Command>();
   subCommands.set("remove", removeCommand);
   subCommands.set("add", addCommand);
 
