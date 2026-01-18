@@ -8,7 +8,7 @@
         "@vue/compiler-dom": "3.5.25",
         "@vue/compiler-sfc": "3.5.25",
         "globby": "16.0.0",
-        "gunshi": "0.27.0",
+        "gunshi": "0.27.5",
       },
       "devDependencies": {
         "@types/bun": "1.3.6",
@@ -71,7 +71,7 @@
 
     "globby": ["globby@16.0.0", "", { "dependencies": { "@sindresorhus/merge-streams": "^4.0.0", "fast-glob": "^3.3.3", "ignore": "^7.0.5", "is-path-inside": "^4.0.0", "slash": "^5.1.0", "unicorn-magic": "^0.4.0" } }, "sha512-ejy4TJFga99yW6Q0uhM3pFawKWZmtZzZD/v/GwI5+9bCV5Ew+D2pSND6W7fUes5UykqSsJkUfxFVdRh7Q1+P3Q=="],
 
-    "gunshi": ["gunshi@0.27.0", "", { "dependencies": { "args-tokens": "^0.23.0" } }, "sha512-x4htNMezP3PnOW39ZsQlnijZAw5IONYO3whczfI+7H6LKE5Zgepdo1T+gN28g9wGfDlSuv6A9pAHI4otKNq3lA=="],
+    "gunshi": ["gunshi@0.27.5", "", { "dependencies": { "args-tokens": "^0.23.0" } }, "sha512-ExdnmI90hQ/eR1wnUc5rVom+K16F1hSpbYrplpt6rrJhXLprVGK9/E63bk7Rju27hAqc3WvpCa8PeY95R165fw=="],
 
     "ignore": ["ignore@7.0.5", "", {}, "sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg=="],
 
