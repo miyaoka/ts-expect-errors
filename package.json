@@ -18,8 +18,8 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@vue/compiler-dom": "3.5.26",
-    "@vue/compiler-sfc": "3.5.26",
+    "@vue/compiler-dom": "3.5.27",
+    "@vue/compiler-sfc": "3.5.27",
     "globby": "16.1.0",
     "gunshi": "0.27.5"
   }
