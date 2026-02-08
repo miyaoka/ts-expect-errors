@@ -21,6 +21,6 @@
     "@vue/compiler-dom": "3.5.27",
     "@vue/compiler-sfc": "3.5.27",
     "globby": "16.1.0",
-    "gunshi": "0.27.5"
+    "gunshi": "0.27.6"
   }
 }
