@@ -1,24 +1,25 @@
-import { define } from "gunshi";
+import { defineCommand } from "@miyaoka/fsss";
 import { globby } from "globby";
 import { resolve } from "node:path";
+import { z } from "zod";
 import { removeTsExpectErrors } from "./processors/ts-processor";
 import { removeTsxExpectErrors } from "./processors/tsx-processor";
 import { removeVueExpectErrors } from "./processors/vue-processor";
 import { isVueFile, isTsxFile } from "../../utils/file-types";
 
-export const removeCommand = define({
-  name: "remove",
+export default defineCommand({
+  description: "Remove @ts-expect-error comments from files",
   args: {
     // 対象ディレクトリまたはファイル
     target: {
-      type: "string",
-      short: "t",
+      type: z.string(),
+      alias: "t",
       description: "Target directory or file path",
       default: ".",
     },
   },
-  run: async (ctx) => {
-    const { target } = ctx.values;
+  run: async ({ args }) => {
+    const { target } = args;
     const targetPath = resolve(target);
 
     console.log(`Removing @ts-expect-error comments from ${targetPath}...`);

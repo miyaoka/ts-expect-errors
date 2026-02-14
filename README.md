@@ -11,7 +11,7 @@ TypeScript/Vue.js プロジェクトの型チェック結果を受け取り、�
 
 ## 実装
 
-- gunshi を使用した CLI ハンドリング実装
+- @miyaoka/fsss を使用した CLI ハンドリング実装
 - Bun ランタイムを使用して TypeScript を直接実行（ビルド不要）
 
 ## 開発環境のセットアップ
