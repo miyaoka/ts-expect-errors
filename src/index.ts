@@ -1,5 +1,10 @@
 #!/usr/bin/env bun
-import { run } from "./commands";
+import { join } from "node:path";
+import { createCLI } from "@miyaoka/fsss";
 
-// CLIコマンドを実行
-await run();
+const cli = createCLI({
+  name: "ts-expect-errors",
+  commandsDir: join(import.meta.dirname, "commands"),
+  defaultCommand: "add",
+});
+await cli.run();

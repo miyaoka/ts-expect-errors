@@ -18,9 +18,10 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "@miyaoka/fsss": "0.3.0",
     "@vue/compiler-dom": "3.5.28",
     "@vue/compiler-sfc": "3.5.28",
     "globby": "16.1.0",
-    "gunshi": "0.27.6"
+    "zod": "^4.3.6"
   }
 }

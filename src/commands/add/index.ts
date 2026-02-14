@@ -1,6 +1,7 @@
-import { define } from "gunshi";
+import { defineCommand } from "@miyaoka/fsss";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { z } from "zod";
 import { processTypeScriptErrors } from "./core";
 
 // 標準入力からデータを読み込む関数
@@ -42,28 +43,27 @@ async function readTscOutput(logFile: string | undefined): Promise<string> {
   return await readFromStdin();
 }
 
-export const addCommand = define({
-  name: "add",
+export default defineCommand({
+  description: "Add @ts-expect-error comments to suppress type errors",
   args: {
     // 処理の基準パスオプション
     target: {
-      type: "string",
-      short: "t",
+      type: z.string(),
+      alias: "t",
       description: "Target path for resolving file paths",
       default: ".",
     },
     // tscログファイルオプション
-    logFile: {
-      type: "string",
-      toKebab: true,
-      short: "l",
+    "log-file": {
+      type: z.string(),
+      alias: "l",
       description:
         "Path to tsc/vue-tsc log file (reads from stdin if not specified)",
     },
   },
-  run: async (ctx) => {
-    const targetPath = resolve(ctx.values.target);
-    const tscOutput = await readTscOutput(ctx.values.logFile);
+  run: async ({ args }) => {
+    const targetPath = resolve(args.target);
+    const tscOutput = await readTscOutput(args["log-file"]);
 
     // 入力が空の場合
     if (!tscOutput.trim()) {
@@ -71,8 +71,8 @@ export const addCommand = define({
         "Error: No input provided. Please provide a log file or pipe tsc/vue-tsc output."
       );
       console.error("Usage:");
-      console.error("  tsc --noEmit | bun run src/index.ts");
-      console.error("  bun run src/index.ts --log-file tsc-output.txt");
+      console.error("  tsc --noEmit | bun run src/index.ts add");
+      console.error("  bun run src/index.ts add --log-file tsc-output.txt");
       process.exit(1);
     }
 
