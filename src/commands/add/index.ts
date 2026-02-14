@@ -55,7 +55,7 @@ export default defineCommand({
     },
     // tscログファイルオプション
     "log-file": {
-      type: z.string(),
+      type: z.string().optional(),
       alias: "l",
       description:
         "Path to tsc/vue-tsc log file (reads from stdin if not specified)",
