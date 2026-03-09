@@ -4,31 +4,6 @@ import { resolve } from "node:path";
 import { z } from "zod";
 import { processTypeScriptErrors } from "./core";
 
-// 標準入力からデータを読み込む関数
-async function readFromStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-
-  // stdinがTTYの場合（パイプされていない場合）
-  if (process.stdin.isTTY) {
-    return "";
-  }
-
-  return new Promise((resolve, reject) => {
-    process.stdin.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
-
-    process.stdin.on("end", () => {
-      const input = Buffer.concat(chunks).toString("utf-8");
-      resolve(input);
-    });
-
-    process.stdin.on("error", (err) => {
-      reject(err);
-    });
-  });
-}
-
 // ログファイルまたは標準入力から読み込む関数
 async function readTscOutput(logFile: string | undefined): Promise<string> {
   // ログファイルが指定されている場合
@@ -38,9 +13,14 @@ async function readTscOutput(logFile: string | undefined): Promise<string> {
     return await readFile(logFilePath, "utf-8");
   }
 
+  // stdinがTTYの場合（パイプされていない場合）
+  if (process.stdin.isTTY) {
+    return "";
+  }
+
   // 標準入力から読み込み
   console.log("Reading from stdin...");
-  return await readFromStdin();
+  return await Bun.stdin.text();
 }
 
 export default defineCommand({
