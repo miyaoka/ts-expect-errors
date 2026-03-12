@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "@miyaoka/fsss": "0.3.1",
-    "@vue/compiler-dom": "3.5.29",
-    "@vue/compiler-sfc": "3.5.29",
+    "@vue/compiler-dom": "3.5.30",
+    "@vue/compiler-sfc": "3.5.30",
     "globby": "16.1.1",
     "zod": "^4.3.6"
   }
