@@ -18,7 +18,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@miyaoka/fsss": "0.3.1",
+    "@miyaoka/fsss": "0.4.0",
     "@vue/compiler-dom": "3.5.30",
     "@vue/compiler-sfc": "3.5.30",
     "globby": "16.1.1",
