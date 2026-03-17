@@ -5,7 +5,7 @@
     "": {
       "name": "ts-expect-errors",
       "dependencies": {
-        "@miyaoka/fsss": "0.3.1",
+        "@miyaoka/fsss": "0.4.0",
         "@vue/compiler-dom": "3.5.30",
         "@vue/compiler-sfc": "3.5.30",
         "globby": "16.1.1",
@@ -30,7 +30,7 @@
 
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
-    "@miyaoka/fsss": ["@miyaoka/fsss@0.3.1", "", { "dependencies": { "zod": "4.3.6" }, "bin": { "fsss-codegen": "dist/codegen.js" } }, "sha512-xy2BEuHJDe8fQJMVWrqIUnE8AQpl15/hzB68R/xBlJiLMkVF58KUBV28s6fCVQtC5BKSS3qGsdLfoY/mm50aMA=="],
+    "@miyaoka/fsss": ["@miyaoka/fsss@0.4.0", "", { "dependencies": { "zod": "4.3.6" }, "bin": { "fsss-codegen": "dist/codegen.js" } }, "sha512-C20H0KyHvAbIXYID9i3Z5Qo9QYOGOmwgJVZaqWuLMd96Jm82Ehi0CYbhu68dFWQFHAZ7fHi30IAVfdCR3N+ahQ=="],
 
     "@nodelib/fs.scandir": ["@nodelib/fs.scandir@2.1.5", "", { "dependencies": { "@nodelib/fs.stat": "2.0.5", "run-parallel": "^1.1.9" } }, "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g=="],
 
