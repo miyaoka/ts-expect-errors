@@ -21,7 +21,7 @@
     "@miyaoka/fsss": "0.4.0",
     "@vue/compiler-dom": "3.5.31",
     "@vue/compiler-sfc": "3.5.31",
-    "globby": "16.1.1",
+    "globby": "16.2.0",
     "zod": "^4.3.6"
   }
 }
