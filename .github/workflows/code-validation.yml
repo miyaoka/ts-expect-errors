@@ -1,5 +1,5 @@
 # コード品質検証ワークフロー
-# プルリクエスト時にTypeScript（tsgo）の型チェックとテストを並列実行
+# プルリクエスト時にTypeScriptの型チェックとテストを並列実行
 name: Code Validation
 
 on:
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       # 開発環境の共通セットアップ（mise + pnpm install）
       - uses: ./.github/actions/setup
-      # TypeScriptの型チェック実行（tsgo）
+      # TypeScriptの型チェック実行（tsc）
       - run: pnpm run typecheck
 
   # テスト実行
