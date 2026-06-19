@@ -1,0 +1,22 @@
+name: "Setup Environment"
+description: "開発環境のセットアップ（mise で bun/pnpm を導入、pnpm store キャッシュ、install）"
+runs:
+  using: "composite"
+  steps:
+    # mise経由でbun/pnpmの適切なバージョンをセットアップ
+    - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4
+    # pnpm storeのパスを取得
+    - name: Get pnpm store directory
+      shell: bash
+      run: echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+    # pnpm storeのキャッシュで高速化
+    - name: Cache pnpm store
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: ${{ env.PNPM_STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+    # 依存関係のインストール（lockfile固定）
+    - run: pnpm install --frozen-lockfile
+      shell: bash

@@ -46,7 +46,8 @@ export async function runTestWithLogs(options: FixtureOptions) {
 
   // afterディレクトリで依存関係をインストール
   if (existsSync(join(afterDir, "package.json"))) {
-    await $`bun install`.cwd(afterDir).quiet();
+    // fixtureはルートワークスペースに属さない独立プロジェクトとしてinstall
+    await $`pnpm install --ignore-workspace`.cwd(afterDir).quiet();
   }
 
   // typecheckを実行してエラーを取得（処理前の状態）
@@ -95,8 +96,8 @@ export function copyDirectory(src: string, dest: string) {
   const entries = readdirSync(src, { withFileTypes: true });
 
   for (const entry of entries) {
-    // node_modulesとbun.lockbはコピーしない
-    if (entry.name === "node_modules" || entry.name === "bun.lockb") continue;
+    // node_modulesはコピーしない（pnpm-lock.yamlは再現性のためコピーする）
+    if (entry.name === "node_modules") continue;
 
     const srcPath = join(src, entry.name);
     const destPath = join(dest, entry.name);
@@ -113,6 +114,6 @@ export function copyDirectory(src: string, dest: string) {
 export async function setupFixture(fixtureDir: string) {
   if (existsSync(join(fixtureDir, "package.json"))) {
     console.log(`Installing dependencies for ${fixtureDir}...`);
-    await $`bun install`.cwd(fixtureDir);
+    await $`pnpm install --ignore-workspace`.cwd(fixtureDir);
   }
 }

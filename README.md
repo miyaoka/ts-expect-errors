@@ -23,7 +23,7 @@ mise install
 
 ```sh
 # 依存パッケージのインストール
-bun install
+pnpm install
 ```
 
 ## 使用方法

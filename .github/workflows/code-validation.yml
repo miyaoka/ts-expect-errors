@@ -1,5 +1,5 @@
 # コード品質検証ワークフロー
-# プルリクエスト時にTypeScriptの型チェックとテストを並列実行
+# プルリクエスト時にTypeScript（tsgo）の型チェックとテストを並列実行
 name: Code Validation
 
 on:
@@ -22,7 +22,7 @@ jobs:
               - '**/*.tsx'
               - 'tsconfig.json'
               - 'package.json'
-              - 'bun.lock'
+              - 'pnpm-lock.yaml'
 
   # TypeScriptの型チェック（TypeScript関連ファイル変更時のみ実行）
   typecheck:
@@ -33,9 +33,9 @@ jobs:
     steps:
       # リポジトリのチェックアウト
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      # Bun環境の共通セットアップ
-      - uses: ./.github/actions/setup-bun
-      # TypeScriptの型チェック実行
+      # 開発環境の共通セットアップ（mise + pnpm install）
+      - uses: ./.github/actions/setup
+      # TypeScriptの型チェック実行（tsgo）
       - run: bun run typecheck
 
   # テスト実行
@@ -45,7 +45,7 @@ jobs:
     steps:
       # リポジトリのチェックアウト
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      # Bun環境の共通セットアップ
-      - uses: ./.github/actions/setup-bun
+      # 開発環境の共通セットアップ（mise + pnpm install）
+      - uses: ./.github/actions/setup
       # テスト実行
       - run: bun test
