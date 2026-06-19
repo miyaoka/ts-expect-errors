@@ -1,0 +1,4 @@
+# 単一パッケージだが pnpm v10+ の設定ファイルとして利用する
+
+# 公開直後（3日 = 4320分）のバージョンは取り込まない（旧 bunfig minimumReleaseAge 相当）
+minimumReleaseAge: 4320

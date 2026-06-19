@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "vue": "3.5.38",
-    "vue-tsc": "3.3.5"
+    "vue": "3.5.38"
   },
   "devDependencies": {
-    "typescript": "6.0.3"
+    "vue-tsc": "3.3.5"
   },
   "scripts": {
     "typecheck": "vue-tsc --noEmit"

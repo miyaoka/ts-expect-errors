@@ -17,7 +17,9 @@ for (const fixture of fixtures) {
   if (existsSync(join(fixture, "package.json"))) {
     console.log(`📦 Installing dependencies for ${fixture}...`);
     try {
-      await $`bun install`.cwd(fixture);
+      // fixtureは外部利用者プロジェクトを模した独立プロジェクト。
+      // ルートのpnpm-workspace.yamlに巻き込まれないよう--ignore-workspaceで個別install
+      await $`pnpm install --ignore-workspace`.cwd(fixture);
       console.log(`✅ ${fixture} ready\n`);
     } catch (error) {
       console.error(`❌ Failed to install dependencies for ${fixture}`);

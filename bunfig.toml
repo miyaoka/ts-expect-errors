@@ -1,6 +1,4 @@
-[install]
-minimumReleaseAge = 259200 # 3 days in seconds
-
+# パッケージ管理は pnpm に移行。bun はテストランナー / ランタイムとしてのみ使用する
 [test]
 # src2フォルダをテスト対象から除外
 # e2eフォルダ内のテストファイルのみを対象とする
