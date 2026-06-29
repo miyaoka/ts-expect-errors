@@ -4,7 +4,7 @@
 
 ```
 test/
-├── fixtures/           # テスト用の入力データ（処理前）
+├── __fixtures__/       # テスト用の入力データ（処理前）※Renovate デフォルト ignore 対象
 ├── fixtures-processed/ # CLIで処理された結果（処理後）※gitignore対象
 ├── index.test.ts      # メインテストファイル
 ├── test-utils.ts      # テスト用ユーティリティ関数
@@ -14,7 +14,7 @@ test/
 
 ## ディレクトリの関係
 
-- **`fixtures/`**: 型エラーを含む元の TypeScript/Vue プロジェクト（処理前の状態）
+- **`__fixtures__/`**: 型エラーを含む元の TypeScript/Vue プロジェクト（処理前の状態）
 - **`fixtures-processed/`**: CLI ツールが`@ts-expect-error`コメントを挿入した後の状態
 
 この関係により、処理前（before）と処理後（after）の状態が明確に分離されています。
@@ -25,7 +25,7 @@ test/
 
 1. **フィクスチャをコピー**
 
-   - `fixtures/`から`fixtures-processed/`へフィクスチャをコピー
+   - `__fixtures__/`から`fixtures-processed/`へフィクスチャをコピー
    - 元のフィクスチャは変更されない
 
 2. **CLI ツールを実行**
@@ -71,5 +71,5 @@ bun run test
 ## 注意事項
 
 - `fixtures-processed/`は自動生成されるため、git で管理しない
-- 新しいフィクスチャを追加する場合は`fixtures/`内に配置
+- 新しいフィクスチャを追加する場合は`__fixtures__/`内に配置
 - 各フィクスチャは独立した TypeScript/Vue プロジェクトとして構成
