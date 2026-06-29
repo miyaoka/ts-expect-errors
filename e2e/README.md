@@ -8,7 +8,6 @@ test/
 ├── fixtures-processed/ # CLIで処理された結果（処理後）※gitignore対象
 ├── index.test.ts      # メインテストファイル
 ├── test-utils.ts      # テスト用ユーティリティ関数
-├── setup.ts           # フィクスチャの依存関係インストール用スクリプト
 └── .gitignore         # fixtures-processed/を無視
 ```
 
@@ -41,7 +40,7 @@ test/
 
 - **`ts-only/`**: 純粋な TypeScript プロジェクト（`.ts`ファイル）
 - **`vue-project/`**: Vue プロジェクト（`.vue`ファイル、`vue-tsc`使用）
-- **`react-project/`**: ※TSX 未対応のため現在は除外
+- **`react-project/`**: React プロジェクト（`.tsx`ファイル、TSX のコメント挿入を検証）
 
 ### 検証内容
 
