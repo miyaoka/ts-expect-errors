@@ -3,10 +3,8 @@ import { $ } from "bun";
 import { rmSync, writeFileSync } from "node:fs";
 import { resolve, join } from "node:path";
 import {
-  FIXTURES_DIR,
   TEST_PROCESSED_DIR,
   runTestWithLogs,
-  setupFixture,
   type FixtureOptions,
 } from "./test-utils";
 
@@ -17,14 +15,11 @@ const FIXTURES: FixtureOptions[] = [
   { name: "vue-project" },
 ];
 
-beforeAll(async () => {
-  // テスト開始時に一度だけ一時ディレクトリをクリーンアップ
+beforeAll(() => {
+  // テスト開始時に一度だけ一時ディレクトリをクリーンアップ。
+  // 依存の install は各テストの runTestWithLogs が processed コピー側で行う
+  // （source fixture 側の install は誰も消費しないため不要）
   rmSync(TEST_PROCESSED_DIR, { recursive: true, force: true });
-
-  // 全フィクスチャの依存関係を事前にインストール
-  await Promise.all(
-    FIXTURES.map((fixture) => setupFixture(join(FIXTURES_DIR, fixture.name)))
-  );
 });
 
 // 各フィクスチャに対してテストを生成

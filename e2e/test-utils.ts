@@ -115,11 +115,3 @@ export function copyDirectory(src: string, dest: string) {
     }
   }
 }
-
-// フィクスチャの依存関係をインストール
-export async function setupFixture(fixtureDir: string) {
-  if (existsSync(join(fixtureDir, "package.json"))) {
-    console.log(`Installing dependencies for ${fixtureDir}...`);
-    await $`pnpm install --ignore-workspace`.cwd(fixtureDir);
-  }
-}
