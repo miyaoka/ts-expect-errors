@@ -3,6 +3,7 @@ import { $ } from "bun";
 import { rmSync, writeFileSync } from "node:fs";
 import { resolve, join } from "node:path";
 import {
+  FIXTURES_DIR,
   TEST_PROCESSED_DIR,
   runTestWithLogs,
   setupFixture,
@@ -22,7 +23,7 @@ beforeAll(async () => {
 
   // 全フィクスチャの依存関係を事前にインストール
   await Promise.all(
-    FIXTURES.map((fixture) => setupFixture(`e2e/__fixtures__/${fixture.name}`))
+    FIXTURES.map((fixture) => setupFixture(join(FIXTURES_DIR, fixture.name)))
   );
 });
 

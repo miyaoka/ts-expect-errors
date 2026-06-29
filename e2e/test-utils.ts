@@ -26,6 +26,12 @@ async function executeCli(
     .quiet();
 }
 
+// フィクスチャの基準ディレクトリ（処理前の入力）。
+// `__fixtures__` という名前は load-bearing: Renovate のデフォルト ignorePaths
+// (`**/__fixtures__/**`) にマッチさせ、フィクスチャ内の依存を自動更新対象から外すための命名。
+// 別名に変えると Renovate の除外が外れ、テストは fail しないまま依存だけ更新されて壊れる。
+export const FIXTURES_DIR = "e2e/__fixtures__";
+
 // CLIで処理されたテストフィクスチャのディレクトリ
 export const TEST_PROCESSED_DIR = "e2e/fixtures-processed";
 
@@ -38,7 +44,7 @@ export interface FixtureOptions {
 // ログを記録する共通関数
 export async function runTestWithLogs(options: FixtureOptions) {
   const { name } = options;
-  const fixtureDir = `e2e/__fixtures__/${name}`;
+  const fixtureDir = join(FIXTURES_DIR, name);
   const afterDir = join(TEST_PROCESSED_DIR, name);
 
   // afterディレクトリを作成してコピー
