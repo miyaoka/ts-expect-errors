@@ -38,7 +38,7 @@ export interface FixtureOptions {
 // ログを記録する共通関数
 export async function runTestWithLogs(options: FixtureOptions) {
   const { name } = options;
-  const fixtureDir = `e2e/fixtures/${name}`;
+  const fixtureDir = `e2e/__fixtures__/${name}`;
   const afterDir = join(TEST_PROCESSED_DIR, name);
 
   // afterディレクトリを作成してコピー

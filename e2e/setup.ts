@@ -5,7 +5,9 @@ import { readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { $ } from "bun";
 
-const FIXTURES_DIR = "e2e/fixtures";
+// Renovate のデフォルト ignorePaths (`**/__fixtures__/**`) に乗せ、
+// フィクスチャの依存を自動更新対象から外すための命名
+const FIXTURES_DIR = "e2e/__fixtures__";
 
 // フィクスチャディレクトリを取得
 const fixtures = readdirSync(FIXTURES_DIR, { withFileTypes: true })
