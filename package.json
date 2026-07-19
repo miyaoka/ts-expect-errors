@@ -18,7 +18,7 @@
     "@miyaoka/fsss": "0.6.0",
     "@vue/compiler-dom": "3.5.39",
     "@vue/compiler-sfc": "3.5.39",
-    "globby": "16.2.1",
+    "globby": "16.2.2",
     "typescript": "6.0.3",
     "zod": "^4.3.6"
   }
