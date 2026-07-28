@@ -6,6 +6,18 @@
 
 - @docs/vue-ast-structure.md
 
+## TypeScript のバージョン構成
+
+TS7 はネイティブポートでプログラマティック API を持たない（7.1 で提供予定）。`src/utils/tsx-utils.ts` が `ts.createSourceFile` で TSX を解析するため、API 側は TS6 から動かせない。よって package.json は公式が示す共存レイアウトを取る。
+
+- `typescript` → `npm:@typescript/typescript6`（API 用。`import * as ts from "typescript"` の解決先。CLI は `tsc6`）
+- `@typescript/native` → `npm:typescript@7`（`tsc` コマンドを提供。`pnpm run typecheck` はこちら）
+
+fixture 側の割り当ても同じ制約から決まる。
+
+- `ts-only` / `react-project`: TS7。tsc7 のエラー出力に対するツールの動作を e2e で検証する
+- `vue-project`: TS6 固定。vue-tsc（Volar）が TS API 依存のため TS7 では動かない。vue-tsc の peer は `typescript: >=5.0.0` と緩く、明示 pin がないと lock 更新で 7 系に流れて壊れる
+
 ## ⚠️ 重要事項
 
 ### ツールとライブラリに関する前提
