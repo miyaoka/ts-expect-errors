@@ -53,8 +53,10 @@ export async function runTestWithLogs(options: FixtureOptions) {
   // afterディレクトリで依存関係をインストール
   if (existsSync(join(afterDir, "package.json"))) {
     // fixtureはルートワークスペースに属さない独立プロジェクトとしてinstall。
+    // --lockfile-dir で lock の位置を fixture 自身に固定する。--ignore-workspace だけでは
+    // pnpm がリポジトリルートをワークスペースルートと見なし、そこを基準に importer を探す。
     // --frozen-lockfileでコミット済みlockとpackage.jsonの乖離をテスト失敗として表面化させる
-    await $`pnpm install --ignore-workspace --frozen-lockfile`
+    await $`pnpm install --ignore-workspace --frozen-lockfile --lockfile-dir .`
       .cwd(afterDir)
       .quiet();
   }
