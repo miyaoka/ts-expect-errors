@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@miyaoka/fsss':
         specifier: 0.6.0
-        version: 0.6.0(zod@4.6.4)
+        version: 0.6.0(zod@4.6.5)
       '@vue/compiler-dom':
         specifier: 3.5.42
         version: 3.5.42
@@ -25,7 +25,7 @@ importers:
         version: '@typescript/typescript6@6.0.2'
       zod:
         specifier: ^4.3.6
-        version: 4.6.4
+        version: 4.6.5
     devDependencies:
       '@types/bun':
         specifier: 1.4.2
@@ -342,8 +342,8 @@ packages:
     resolution: {integrity: sha512-wH590V9VNgYH9g3lH9wWjTrUoKsjLF6sGLjhR4sH1LWpLmCOH0Zf7PukhDA8BiS7KHe4oPNkcTHqYkj7SOGUOw==}
     engines: {node: '>=20'}
 
-  zod@4.6.4:
-    resolution: {integrity: sha512-AXSD6hvGdvRjajG/l1cC+d6IrhH+sjmPKtYeQdJIK8MFJl3LyClzS+o/YsVC+zQZPupAaeH5skwwm8YqYH7BqA==}
+  zod@4.6.5:
+    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
 
 snapshots:
 
@@ -362,9 +362,9 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.6.0': {}
 
-  '@miyaoka/fsss@0.6.0(zod@4.6.4)':
+  '@miyaoka/fsss@0.6.0(zod@4.6.5)':
     dependencies:
-      zod: 4.6.4
+      zod: 4.6.5
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -606,4 +606,4 @@ snapshots:
 
   unicorn-magic@0.4.0: {}
 
-  zod@4.6.4: {}
+  zod@4.6.5: {}
